@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatar    String?
+  plan      String   @default("free")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profiles     Profile[]
+  resumes      Resume[]
+  jobDescriptions JobDescription[]
+  applications Application[]
+  ipsScores    IPSScore[]
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  location  String?
+  phone     String?
+  linkedin  String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Resume {
+  id        String   @id @default(cuid())
+  userId    String
+  fileName  String
+  fileUrl   String?
+  rawText   String
+  version   Int      @default(1)
+  parsedData String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills      ResumeSkill[]
+  projects    ResumeProject[]
+  experiences ResumeExperience[]
+  educations  ResumeEducation[]
+  ipsScores   IPSScore[]
+  applications Application[]
+}
+
+model ResumeSkill {
+  id        String  @id @default(cuid())
+  resumeId  String
+  name      String
+  category  String?
+  proficiency String?
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+}
+
+model ResumeProject {
+  id          String  @id @default(cuid())
+  resumeId    String
+  name        String
+  description String?
+  technologies String?
+  startDate   String?
+  endDate     String?
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+}
+
+model ResumeExperience {
+  id          String  @id @default(cuid())
+  resumeId    String
+  company     String
+  role        String
+  description String?
+  startDate   String?
+  endDate     String?
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+}
+
+model ResumeEducation {
+  id        String  @id @default(cuid())
+  resumeId  String
+  institution String
+  degree    String?
+  field     String?
+  gpa       String?
+  startDate String?
+  endDate   String?
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+}
+
+model JobDescription {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  company     String?
+  rawText     String
+  parsedData  String?
+  jobUrl      String?
+  roleType    String?
+  seniority   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills      JDSkill[]
+  requirements JDRequirement[]
+  ipsScores   IPSScore[]
+  applications Application[]
+}
+
+model JDSkill {
+  id              String  @id @default(cuid())
+  jobDescriptionId String
+  name            String
+  category        String?
+  required        Boolean @default(true)
+
+  jobDescription JobDescription @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+}
+
+model JDRequirement {
+  id              String  @id @default(cuid())
+  jobDescriptionId String
+  type            String
+  description     String
+
+  jobDescription JobDescription @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  userId      String
+  resumeId    String?
+  jobId       String?
+  company     String
+  role        String
+  status      String   @default("applied")
+  appliedDate DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume          Resume?          @relation(fields: [resumeId], references: [id])
+  jobDescription  JobDescription?  @relation(fields: [jobId], references: [id])
+  outcomes        Outcome[]
+}
+
+model Outcome {
+  id             String   @id @default(cuid())
+  applicationId  String
+  status         String
+  receivedAt     DateTime @default(now())
+  notes          String?
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model IPSScore {
+  id          String   @id @default(cuid())
+  userId      String
+  resumeId    String
+  jobId       String?
+  overallScore  Float
+  atsScore     Float
+  skillsScore  Float
+  projectScore Float
+  strengths    String
+  weaknesses   String
+  missingSkills String
+  recommendations String
+  createdAt   DateTime @default(now())
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume         Resume         @relation(fields: [resumeId], references: [id])
+  jobDescription JobDescription? @relation(fields: [jobId], references: [id])
+}
